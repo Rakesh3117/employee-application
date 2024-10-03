@@ -2,18 +2,46 @@ import React, { useState } from 'react';
 import Header from './Header';
 import Footer from './Footer';
 import '../styling/createEmployee.css';
-import axios from 'axios';
 
-const CreateEmployee = () => {
+const CreateEmployee = ({addEmployee}) => {
     const [formData, setFormData] = useState({
         name: '',
         email: '',
         phoneNumber: '',
         gender: '',
-        designation: '',
+        designation: '', 
         selectedSkills: [],
-        selectedFile: null,
+        selectedFile: '',
+        fileAddress:''
     });
+
+    const [file, setFile] = useState(null);
+
+    const handleUpload = async () => {
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch('http://localhost:5000/upload', {
+                method: 'POST',
+                body: formData,
+            });
+            const result = await response.json();
+
+            console.log('File uploaded successfully:', result);
+            console.log("result = ",result.filePath)
+            setFormData((prevFormData) => ({
+                ...prevFormData,
+                fileAddress: result.filePath
+            }));
+        } catch (error) {
+            console.error('Error uploading file:', error);
+        }
+    };
+
+    
 
     const [errors, setErrors] = useState({
         nameError: '',
@@ -22,53 +50,105 @@ const CreateEmployee = () => {
     });
 
     // Handling changes in the form fields
-phoneNumber) ? '' : 'Please enter a valid 10-digit phone number.' });
-filter((skill) => skill !== value);
-    // Submitting form data using FormData for file upload
-    const callingAPI = async () => {
-        const formDataToSend = new FormData();
-        formDataToSend.append('name', formData.name);
-        formDataToSend.append('email', formData.email);
-        formDataToSend.append('phoneNumber', formData.phoneNumber);
-        formDataToSend.append('gender', formData.gender);
-        formDataToSend.append('designation', formData.designation);
-        formDataToSend.append('selectedSkills', formData.selectedSkills.join(',')); // Convert array to comma-separated string
-        formDataToSend.append('selectedFile', formData.selectedFile);
+    const handleName = (event) => {
+        const name = event.target.value;
+        const nameRegex = /^[a-zA-Z\s]{1,29}$/;
+        setFormData({ ...formData, name });
+        setErrors({ ...errors, nameError: nameRegex.test(name) ? '' : 'Name must be less than 30 characters and contain only letters.' });
+    };
 
-        try {
-            const response = await axios.post('http://localhost:5000/create-new-employee', formDataToSend, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
+    const handleEmailChange = (event) => {
+        const email = event.target.value;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        setFormData({ ...formData, email });
+        setErrors({ ...errors, emailError: emailRegex.test(email) ? '' : 'Please enter a valid email address.' });
+    };
 
-            if (response.status === 200) {
-                alert('Employee Created Successfully');
-                setFormData({
-                    name: '',
-                    email: '',
-                    phoneNumber: '',
-                    gender: '',
-                    designation: '',
-                    selectedSkills: [],
-                    selectedFile: null,
-                });
-                setErrors({
-                    nameError: '',
-                    emailError: '',
-                    phoneNumberError: '',
-                });
-            } else {
-                alert('Error creating employee. Please try again.');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('An error occurred. Please try again later.');
+    const handlePhoneNumber = (event) => {
+        const phoneNumber = event.target.value;
+        const phoneNumberRegex = /^\d{10}$/;
+        setFormData({ ...formData, phoneNumber });
+        setErrors({ ...errors, phoneNumberError: phoneNumberRegex.test(phoneNumber) ? '' : 'Please enter a valid 10-digit phone number.' });
+    };
+
+    const handleDesignationChange = (event) => {
+        setFormData({ ...formData, designation: event.target.value });
+    };
+
+    const handleGenderChange = (event) => {
+        setFormData({ ...formData, gender: event.target.value });
+    };
+
+    const handleSkillChange = (event) => {
+        const { value, checked } = event.target;
+        const updatedSkills = checked
+            ? [...formData.selectedSkills, value]
+            : formData.selectedSkills.filter((skill) => skill !== value);
+        setFormData({ ...formData, selectedSkills: updatedSkills });
+    };
+
+    const handleFileChange = (event) => {
+        const file = event.target.files[0];
+        if (file && (file.type === 'image/jpeg' || file.type === 'image/png')) {
+            setFormData({ ...formData, selectedFile: file });
+            setFile(event.target.files[0]);
+        } else {
+            alert('Please select a JPG or PNG image.');
         }
     };
 
+    // Submitting form data using FormData for file upload
+    // const callingAPI = async () => {
+        
+    //     const formDataToSend = new FormData();
+    //     formDataToSend.append('name', formData.name);
+    //     formDataToSend.append('email', formData.email);
+    //     formDataToSend.append('phoneNumber', formData.phoneNumber);
+    //     formDataToSend.append('gender', formData.gender);
+    //     formDataToSend.append('designation', formData.designation);
+    //     formDataToSend.append('selectedSkills', formData.selectedSkills.join(','));
+    //     formDataToSend.append('selectedFile', formData.selectedFile);
+
+    //     console.log(formDataToSend)
+
+    //     try {
+    //         const response = await axios.post('http://localhost:5000/create-new-employee', formDataToSend, {
+    //             headers: {
+    //                 'Content-Type': 'multipart/form-data',
+    //             },
+    //         });
+
+    //         if (response.status === 200) {
+    //             alert('Employee Created Successfully');
+    //             setFormData({
+    //                 name: '',
+    //                 email: '',
+    //                 phoneNumber: '',
+    //                 gender: '',
+    //                 designation: '',
+    //                 selectedSkills: [],
+    //                 selectedFile: null,
+    //             });
+    //             setErrors({
+    //                 nameError: '',
+    //                 emailError: '',
+    //                 phoneNumberError: '',
+    //             });
+    //         } else {
+    //             alert('Error creating employee. Please try again.');
+    //         }
+    //     } catch (error) {
+    //         console.error('Error:', error);
+    //         alert('An error occurred. Please try again later.');
+    //     }
+    // };
+
     const handleSubmit = (event) => {
+
         event.preventDefault();
+
+        handleUpload();
+
         // Basic validation before submitting the form
         if (!formData.name || errors.nameError) {
             alert('Please enter a valid name.');
@@ -91,7 +171,27 @@ filter((skill) => skill !== value);
             return;
         }
 
-        callingAPI(); // Call API to submit the form data
+        console.log(formData)
+
+        addEmployee(formData)
+
+        alert('Employee Created Successfully');
+                setFormData({
+                    name: '',
+                    email: '',
+                    phoneNumber: '',
+                    gender: '',
+                    designation: '',
+                    selectedSkills: [],
+                    selectedFile: null,
+                });
+                setErrors({
+                    nameError: '',
+                    emailError: '',
+                    phoneNumberError: '',
+                });
+
+       // callingAPI(); // Call API to submit the form data
     };
 
     const skills = ['MCA', 'BCA', 'BSA'];
@@ -120,6 +220,7 @@ filter((skill) => skill !== value);
                                                     onChange={handleName}
                                                     placeholder='Enter Name of the Employee .... '
                                                     className='input-bar'
+                                                    required
                                                 />
                                                 {errors.nameError && <p className='error-message'>{errors.nameError}</p>}
                                             </div>
@@ -133,6 +234,7 @@ filter((skill) => skill !== value);
                                                     onChange={handleEmailChange}
                                                     placeholder='Enter Email Address .... '
                                                     className='input-bar'
+                                                    required
                                                 />
                                                 {errors.emailError && <p className='error-message'>{errors.emailError}</p>}
                                             </div>
@@ -147,6 +249,7 @@ filter((skill) => skill !== value);
                                                     placeholder='Enter Mobile Number .... '
                                                     className='input-bar'
                                                     maxLength={10}
+                                                    required
                                                 />
                                                 {errors.phoneNumberError && <p className='error-message'>{errors.phoneNumberError}</p>}
                                             </div>
@@ -200,6 +303,7 @@ filter((skill) => skill !== value);
                                                                 {skill}
                                                             </label>
                                                         ))}
+
                                                     </div>
                                                 </div>
                                             </div>
@@ -211,12 +315,13 @@ filter((skill) => skill !== value);
                                                     accept="image/jpg, image/png"
                                                     onChange={handleFileChange}
                                                     className='file-input'
+                                                    required
                                                 />
                                             </div>
 
                                             {/* Submit button */}
                                             <div className='submit-button'>
-                                                <button type="submit">Submit</button>
+                                                <button className='btn btn-primary submit-button' type="submit">Submit</button>
                                             </div>
                                         </div>
                                     </form>

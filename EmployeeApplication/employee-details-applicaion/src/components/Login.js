@@ -22,7 +22,8 @@ const Login = () => {
             console.log(response)
     
             if (response.status === 200) {
-               // localStorage.setItem("token", response.data.token); 
+                const loginDetails = { username, password };
+                localStorage.setItem("logindetails", JSON.stringify(loginDetails));
                 navigate("/dashboard");
             } else {
                 alert("Invalid Email or Password");
